@@ -1,11 +1,11 @@
-module Main exposing (Model(..), Msg(..), getRandomQuote, init, main, quoteDecoder, quotesDecoder, subscriptions, update, view, viewQuote)
+module Main exposing (Author, Content, Model(..), Msg(..), Quote, Source, authorDecoder, contentDecoder, defaultQuote, getRandomQuote, init, main, quoteDecoder, quotesDecoder, sourceDecoder, subscriptions, update, view, viewAuthor, viewQuote, viewSource)
 
 import Browser
 import Html exposing (Html, blockquote, button, cite, div, footer, h1, span, text)
 import Html.Attributes exposing (class, id, title)
 import Html.Events exposing (onClick)
 import Http
-import Json.Decode exposing (Decoder, field, list, map3, maybe, string)
+import Json.Decode as D
 
 
 
@@ -209,29 +209,29 @@ getRandomQuote =
         }
 
 
-quotesDecoder : Decoder (List Quote)
+quotesDecoder : D.Decoder (List Quote)
 quotesDecoder =
-    list quoteDecoder
+    D.list quoteDecoder
 
 
-quoteDecoder : Decoder Quote
+quoteDecoder : D.Decoder Quote
 quoteDecoder =
-    map3 Quote
+    D.map3 Quote
         contentDecoder
         authorDecoder
         sourceDecoder
 
 
-authorDecoder : Decoder Author
+authorDecoder : D.Decoder Author
 authorDecoder =
-    field "title" string
+    D.field "title" D.string
 
 
-contentDecoder : Decoder Content
+contentDecoder : D.Decoder Content
 contentDecoder =
-    field "content" string
+    D.field "content" D.string
 
 
-sourceDecoder : Decoder Source
+sourceDecoder : D.Decoder Source
 sourceDecoder =
-    maybe (field "custom_meta" (field "Source" string))
+    D.maybe (D.field "custom_meta" (D.field "Source" D.string))
