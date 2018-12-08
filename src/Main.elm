@@ -1,22 +1,65 @@
-module Main exposing (Model, Msg(..), init, main, update, view)
+module Main exposing (Model(..), Msg(..), getRandomQuote, init, main, quoteDecoder, quotesDecoder, subscriptions, update, view, viewQuote)
 
 import Browser
 import Html exposing (Html, blockquote, button, cite, div, footer, h1, span, text)
 import Html.Attributes exposing (class, id, title)
+import Html.Events exposing (onClick)
+import Http
+import Json.Decode exposing (Decoder, field, list, map3, maybe, string)
 
 
 
--- TODO: Integrae the API to get the actual quotes
+---- PROGRAM ----
+
+
+main =
+    Browser.element
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = view
+        }
+
+
+
 ---- MODEL ----
 
 
-type alias Model =
-    {}
+type alias Author =
+    String
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( {}, Cmd.none )
+type alias Content =
+    String
+
+
+type alias Source =
+    Maybe String
+
+
+type alias Quote =
+    { content : Content
+    , author : Author
+    , source : Source
+    }
+
+
+defaultQuote =
+    Quote
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
+        "Someone famous"
+        Nothing
+
+
+type Model
+    = Failure
+    | Loading Quote
+    | Success Quote
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( Loading defaultQuote, getRandomQuote )
 
 
 
@@ -24,12 +67,32 @@ init =
 
 
 type Msg
-    = NoOp
+    = GotQuotes (Result Http.Error (List Quote))
+    | LoadNextQuote
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        LoadNextQuote ->
+            ( Loading defaultQuote, getRandomQuote )
+
+        GotQuotes result ->
+            case result of
+                Ok quotes ->
+                    ( Success (List.head quotes |> Maybe.withDefault defaultQuote), Cmd.none )
+
+                Err _ ->
+                    ( Failure, Cmd.none )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
 
 
 
@@ -49,7 +112,7 @@ view model =
                     ]
                 ]
             , div [ class "col-sm-5 text-sm-right text-center" ]
-                [ button [ class "btn btn-outline-success font-heebo font-weight-bold" ]
+                [ button [ onClick LoadNextQuote, class "btn btn-outline-success font-heebo font-weight-bold" ]
                     [ span [ class "d-none d-md-inline" ]
                         [ text "Get another " ]
                     , span [ class "d-md-none" ]
@@ -68,12 +131,12 @@ view model =
             , div [ class "col-md" ]
                 [ blockquote [ class "blockquote" ]
                     [ div [ class "mb-5 text-center text-md-left", id "quote-content" ]
-                        [ text "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante." ]
+                        [ viewQuote model ]
                     , footer [ class "blockquote-footer text-right" ]
                         [ span []
-                            [ text " Someone famous " ]
+                            [ viewAuthor model ]
                         , cite [ title "Source Title" ]
-                            [ text "(Source Title)" ]
+                            [ viewSource model ]
                         ]
                     ]
                 ]
@@ -85,15 +148,90 @@ view model =
         ]
 
 
+viewQuote : Model -> Html Msg
+viewQuote model =
+    case model of
+        Failure ->
+            text "(Failed fetching data!)"
 
----- PROGRAM ----
+        Loading quote ->
+            text quote.content
+
+        Success quote ->
+            text quote.content
 
 
-main : Program () Model Msg
-main =
-    Browser.element
-        { view = view
-        , init = \_ -> init
-        , update = update
-        , subscriptions = always Sub.none
+viewAuthor : Model -> Html Msg
+viewAuthor model =
+    case model of
+        Failure ->
+            text "Someone famous"
+
+        Loading quote ->
+            text <| " " ++ quote.author
+
+        Success quote ->
+            text <| " " ++ quote.author
+
+
+viewSource : Model -> Html Msg
+viewSource model =
+    case model of
+        Failure ->
+            text ""
+
+        Loading quote ->
+            case quote.source of
+                Just source ->
+                    text <| " (" ++ source ++ ")"
+
+                Nothing ->
+                    text ""
+
+        Success quote ->
+            case quote.source of
+                Just source ->
+                    text <| " (" ++ source ++ ")"
+
+                Nothing ->
+                    text ""
+
+
+
+-- HTTP
+
+
+getRandomQuote : Cmd Msg
+getRandomQuote =
+    Http.get
+        { url = "https://quotesondesign.com/wp-json/posts?filter[orderby]=rand&filter[posts_per_page]=1"
+        , expect = Http.expectJson GotQuotes quotesDecoder
         }
+
+
+quotesDecoder : Decoder (List Quote)
+quotesDecoder =
+    list quoteDecoder
+
+
+quoteDecoder : Decoder Quote
+quoteDecoder =
+    map3 Quote
+        contentDecoder
+        authorDecoder
+        sourceDecoder
+
+
+authorDecoder : Decoder Author
+authorDecoder =
+    field "title" string
+
+
+contentDecoder : Decoder Content
+contentDecoder =
+    field "content" string
+
+
+sourceDecoder : Decoder Source
+sourceDecoder =
+    maybe (field "custom_meta" (field "Source" string))
