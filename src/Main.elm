@@ -89,7 +89,7 @@ initialModel =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( initialModel, getRandomQuote initialModel )
+    ( initialModel, askForUniqueId () )
 
 
 
@@ -107,13 +107,16 @@ update msg model =
     case msg of
         GotUniqueId uid ->
             let
-                _ =
-                    Debug.log "uid in Elm" uid
+                newApi =
+                    Api model.api.url uid
+
+                updatedModel =
+                    { model | api = newApi }
             in
-            ( model, Cmd.none )
+            ( model, getRandomQuote updatedModel )
 
         LoadNextQuote ->
-            ( initialModel, getRandomQuote model )
+            ( model, askForUniqueId () )
 
         GotQuotes result ->
             case result of
@@ -125,7 +128,7 @@ update msg model =
                         page =
                             Success firstQuote
                     in
-                    ( { model | page = page }, askForUniqueId () )
+                    ( { model | page = page }, Cmd.none )
 
                 Err _ ->
                     ( { model | page = Failure }, Cmd.none )
@@ -259,7 +262,7 @@ viewSource model =
 getRandomQuote : Model -> Cmd Msg
 getRandomQuote model =
     Http.get
-        { url = model.api.url
+        { url = model.api.url ++ "?" ++ model.api.uid
         , expect = Http.expectJson GotQuotes quotesDecoder
         }
 
