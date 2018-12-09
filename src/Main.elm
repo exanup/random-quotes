@@ -113,7 +113,7 @@ update msg model =
                 updatedModel =
                     { model | api = newApi }
             in
-            ( model, getRandomQuote updatedModel )
+            ( updatedModel, getRandomQuote updatedModel )
 
         LoadNextQuote ->
             ( model, askForUniqueId () )
