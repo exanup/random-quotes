@@ -1,4 +1,4 @@
-module Main exposing (Author, Content, Model(..), Msg(..), Quote, Source, authorDecoder, contentDecoder, defaultQuote, getRandomQuote, init, main, quoteDecoder, quotesDecoder, sourceDecoder, subscriptions, update, view, viewAuthor, viewQuote, viewSource)
+port module Main exposing (Api, Author, Content, Model, Msg(..), Page(..), Quote, Source, Uid, Url, api, askForUniqueId, authorDecoder, contentDecoder, defaultQuote, getRandomQuote, init, initialModel, main, quoteDecoder, quotesDecoder, sourceDecoder, subscriptions, uniqueId, update, view, viewAuthor, viewQuote, viewSource)
 
 import Browser
 import Html exposing (Html, blockquote, button, cite, div, footer, h1, span, text)
@@ -44,6 +44,32 @@ type alias Quote =
     }
 
 
+type Page
+    = Failure
+    | Loading Quote
+    | Success Quote
+
+
+type alias Url =
+    String
+
+
+type alias Uid =
+    String
+
+
+type alias Api =
+    { url : Url
+    , uid : Uid
+    }
+
+
+type alias Model =
+    { api : Api
+    , page : Page
+    }
+
+
 defaultQuote =
     Quote
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
@@ -51,15 +77,19 @@ defaultQuote =
         Nothing
 
 
-type Model
-    = Failure
-    | Loading Quote
-    | Success Quote
+api =
+    Api
+        "https://quotesondesign.com/wp-json/posts?filter[orderby]=rand&filter[posts_per_page]=1"
+        ""
+
+
+initialModel =
+    Model api (Loading defaultQuote)
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Loading defaultQuote, getRandomQuote )
+    ( initialModel, getRandomQuote initialModel )
 
 
 
@@ -69,21 +99,46 @@ init _ =
 type Msg
     = GotQuotes (Result Http.Error (List Quote))
     | LoadNextQuote
+    | GotUniqueId String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GotUniqueId uid ->
+            let
+                _ =
+                    Debug.log "uid in Elm" uid
+            in
+            ( initialModel, Cmd.none )
+
         LoadNextQuote ->
-            ( Loading defaultQuote, getRandomQuote )
+            ( initialModel, getRandomQuote model )
 
         GotQuotes result ->
             case result of
                 Ok quotes ->
-                    ( Success (List.head quotes |> Maybe.withDefault defaultQuote), Cmd.none )
+                    let
+                        firstQuote =
+                            List.head quotes |> Maybe.withDefault defaultQuote
+
+                        page =
+                            Success firstQuote
+                    in
+                    ( { model | page = page }, Cmd.none )
 
                 Err _ ->
-                    ( Failure, Cmd.none )
+                    ( { model | page = Failure }, Cmd.none )
+
+
+
+-- PORTS
+
+
+port uniqueId : (String -> msg) -> Sub msg
+
+
+port askForUniqueId : () -> Cmd msg
 
 
 
@@ -92,7 +147,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    uniqueId GotUniqueId
 
 
 
@@ -150,7 +205,7 @@ view model =
 
 viewQuote : Model -> Html Msg
 viewQuote model =
-    case model of
+    case model.page of
         Failure ->
             text "(Failed fetching data!)"
 
@@ -163,7 +218,7 @@ viewQuote model =
 
 viewAuthor : Model -> Html Msg
 viewAuthor model =
-    case model of
+    case model.page of
         Failure ->
             text "Someone famous"
 
@@ -176,7 +231,7 @@ viewAuthor model =
 
 viewSource : Model -> Html Msg
 viewSource model =
-    case model of
+    case model.page of
         Failure ->
             text ""
 
@@ -201,10 +256,10 @@ viewSource model =
 -- HTTP
 
 
-getRandomQuote : Cmd Msg
-getRandomQuote =
+getRandomQuote : Model -> Cmd Msg
+getRandomQuote model =
     Http.get
-        { url = "https://quotesondesign.com/wp-json/posts?filter[orderby]=rand&filter[posts_per_page]=1"
+        { url = model.api.url
         , expect = Http.expectJson GotQuotes quotesDecoder
         }
 
