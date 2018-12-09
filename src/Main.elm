@@ -1,4 +1,4 @@
-port module Main exposing (Api, Author, Content, Model, Msg(..), Page(..), Quote, Source, Uid, Url, api, askForUniqueId, authorDecoder, contentDecoder, defaultQuote, getRandomQuote, init, initialModel, main, quoteDecoder, quotesDecoder, sourceDecoder, subscriptions, uniqueId, update, view, viewAuthor, viewQuote, viewSource)
+port module Main exposing (Api, Author, Content, Model, Msg(..), Page(..), Quote, Source, Uid, Url, api, askForUniqueId, authorDecoder, contentDecoder, defaultQuote, getRandomQuote, init, initialModel, main, quoteDecoder, quotesDecoder, sourceDecoder, subscriptions, uniqueId, update, view, viewAuthor, viewContent, viewSource)
 
 import Browser
 import Html exposing (Html, blockquote, button, cite, div, footer, h1, span, text)
@@ -6,6 +6,7 @@ import Html.Attributes exposing (class, id, title)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as D
+import Json.Encode as E
 
 
 
@@ -189,7 +190,7 @@ view model =
             , div [ class "col-md" ]
                 [ blockquote [ class "blockquote" ]
                     [ div [ class "mb-5 text-center text-md-left", id "quote-content" ]
-                        [ viewQuote model ]
+                        [ viewContent model ]
                     , footer [ class "blockquote-footer text-right" ]
                         [ span []
                             [ viewAuthor model ]
@@ -206,8 +207,8 @@ view model =
         ]
 
 
-viewQuote : Model -> Html Msg
-viewQuote model =
+viewContent : Model -> Html Msg
+viewContent model =
     case model.page of
         Failure ->
             text "(Failed fetching data!)"
@@ -239,20 +240,20 @@ viewSource model =
             text ""
 
         Loading quote ->
-            case quote.source of
-                Just source ->
-                    text <| " (" ++ source ++ ")"
-
-                Nothing ->
-                    text ""
+            text <| wrapSourceWithSmallBrackets quote.source
 
         Success quote ->
-            case quote.source of
-                Just source ->
-                    text <| " (" ++ source ++ ")"
+            text <| wrapSourceWithSmallBrackets quote.source
 
-                Nothing ->
-                    text ""
+
+wrapSourceWithSmallBrackets : Source -> String
+wrapSourceWithSmallBrackets mayBeSource =
+    case mayBeSource of
+        Just source ->
+            " (" ++ source ++ ")"
+
+        Nothing ->
+            ""
 
 
 
