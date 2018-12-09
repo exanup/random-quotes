@@ -9,13 +9,13 @@ const app = Elm.Main.init({
 
 console.log(app.ports);
 
-// app.ports.askForUniqueId.subscribe(() => {
-//   console.log('Elm is asking for a unique ID.');
+app.ports.askForUniqueId.subscribe(() => {
+  console.log('Elm is asking for a unique ID.');
 
-//   const id = uuid();
+  const id = uuid();
 
-//   console.log('Sending id: ' + id);
-//   app.ports.uniqueId.send(id);
-// });
+  console.log('Sending id: ' + id);
+  app.ports.uniqueId.send(id);
+});
 
 registerServiceWorker();

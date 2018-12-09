@@ -110,7 +110,7 @@ update msg model =
                 _ =
                     Debug.log "uid in Elm" uid
             in
-            ( initialModel, Cmd.none )
+            ( model, Cmd.none )
 
         LoadNextQuote ->
             ( initialModel, getRandomQuote model )
@@ -125,7 +125,7 @@ update msg model =
                         page =
                             Success firstQuote
                     in
-                    ( { model | page = page }, Cmd.none )
+                    ( { model | page = page }, askForUniqueId () )
 
                 Err _ ->
                     ( { model | page = Failure }, Cmd.none )
