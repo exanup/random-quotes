@@ -231,6 +231,9 @@ viewAuthor model =
 
 getRandomQuote : Model -> Cmd Msg
 getRandomQuote model =
+    -- I know I need to store these keys privately for example in a .env
+    -- But for this quick demo, I think it's fine.
+    -- TODO: Put the keys in an .env file
     Http.request
         { method = "GET"
         , headers = [ Http.header "X-Mashape-Key" "gkr8kFrj1kmshVRpwb7ysAT0iXcwp1OYNE3jsnEeAy65pZLLT7" ]
