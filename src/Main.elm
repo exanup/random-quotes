@@ -80,7 +80,7 @@ defaultQuote =
 
 api =
     Api
-        "https://quotesondesign.com/wp-json/posts?filter[orderby]=rand&filter[posts_per_page]=1"
+        "https://andruxnet-random-famous-quotes.p.mashape.com/?count=1"
         ""
 
 
@@ -262,9 +262,14 @@ wrapSourceWithSmallBrackets mayBeSource =
 
 getRandomQuote : Model -> Cmd Msg
 getRandomQuote model =
-    Http.get
-        { url = model.api.url ++ "?" ++ model.api.uid
+    Http.request
+        { method = "GET"
+        , headers = [ Http.header "X-Mashape-Key" "gkr8kFrj1kmshVRpwb7ysAT0iXcwp1OYNE3jsnEeAy65pZLLT7" ]
+        , url = model.api.url
+        , body = Http.emptyBody
         , expect = Http.expectJson GotQuotes quotesDecoder
+        , timeout = Nothing
+        , tracker = Nothing
         }
 
 
@@ -283,12 +288,12 @@ quoteDecoder =
 
 authorDecoder : D.Decoder Author
 authorDecoder =
-    D.field "title" D.string
+    D.field "author" D.string
 
 
 contentDecoder : D.Decoder Content
 contentDecoder =
-    D.field "content" D.string
+    D.field "quote" D.string
 
 
 sourceDecoder : D.Decoder Source
