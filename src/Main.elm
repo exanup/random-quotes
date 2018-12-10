@@ -1,4 +1,4 @@
-port module Main exposing (Api, Author, Content, Model, Msg(..), Page(..), Quote, Source, Uid, Url, api, askForUniqueId, authorDecoder, contentDecoder, defaultQuote, getRandomQuote, init, initialModel, main, quoteDecoder, quotesDecoder, sourceDecoder, subscriptions, uniqueId, update, view, viewAuthor, viewContent, viewSource)
+port module Main exposing (Api, Author, Content, Model, Msg(..), Page(..), Quote, Uid, Url, api, askForUniqueId, authorDecoder, contentDecoder, defaultQuote, getRandomQuote, init, initialModel, main, quoteDecoder, quotesDecoder, subscriptions, uniqueId, update, view, viewAuthor, viewContent)
 
 import Browser
 import Html exposing (Html, blockquote, button, cite, div, footer, h1, span, text)
@@ -34,14 +34,9 @@ type alias Content =
     String
 
 
-type alias Source =
-    Maybe String
-
-
 type alias Quote =
     { content : Content
     , author : Author
-    , source : Source
     }
 
 
@@ -75,7 +70,6 @@ defaultQuote =
     Quote
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
         "Someone famous"
-        Nothing
 
 
 api =
@@ -194,8 +188,6 @@ view model =
                     , footer [ class "blockquote-footer text-right" ]
                         [ span []
                             [ viewAuthor model ]
-                        , cite [ title "Source Title" ]
-                            [ viewSource model ]
                         ]
                     ]
                 ]
@@ -233,29 +225,6 @@ viewAuthor model =
             text <| " " ++ quote.author
 
 
-viewSource : Model -> Html Msg
-viewSource model =
-    case model.page of
-        Failure ->
-            text ""
-
-        Loading quote ->
-            text <| wrapSourceWithSmallBrackets quote.source
-
-        Success quote ->
-            text <| wrapSourceWithSmallBrackets quote.source
-
-
-wrapSourceWithSmallBrackets : Source -> String
-wrapSourceWithSmallBrackets mayBeSource =
-    case mayBeSource of
-        Just source ->
-            " (" ++ source ++ ")"
-
-        Nothing ->
-            ""
-
-
 
 -- HTTP
 
@@ -265,7 +234,7 @@ getRandomQuote model =
     Http.request
         { method = "GET"
         , headers = [ Http.header "X-Mashape-Key" "gkr8kFrj1kmshVRpwb7ysAT0iXcwp1OYNE3jsnEeAy65pZLLT7" ]
-        , url = model.api.url
+        , url = model.api.url ++ "&?" ++ model.api.uid
         , body = Http.emptyBody
         , expect = Http.expectJson GotQuotes quotesDecoder
         , timeout = Nothing
@@ -280,10 +249,9 @@ quotesDecoder =
 
 quoteDecoder : D.Decoder Quote
 quoteDecoder =
-    D.map3 Quote
+    D.map2 Quote
         contentDecoder
         authorDecoder
-        sourceDecoder
 
 
 authorDecoder : D.Decoder Author
@@ -294,8 +262,3 @@ authorDecoder =
 contentDecoder : D.Decoder Content
 contentDecoder =
     D.field "quote" D.string
-
-
-sourceDecoder : D.Decoder Source
-sourceDecoder =
-    D.maybe (D.field "custom_meta" (D.field "Source" D.string))
