@@ -1,18 +1,18 @@
 port module Main exposing (Api, Author, Content, Model, Msg(..), Page(..), Quote, Uid, Url, api, askForUniqueId, authorDecoder, contentDecoder, defaultQuote, getRandomQuote, init, initialModel, main, quoteDecoder, quotesDecoder, subscriptions, uniqueId, update, view, viewAuthor, viewContent)
 
 import Browser
-import Html exposing (Html, blockquote, button, cite, div, footer, h1, span, text)
-import Html.Attributes exposing (class, id, title)
+import Html exposing (Html, blockquote, button, div, footer, h1, span, text)
+import Html.Attributes exposing (class, id)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as D
-import Json.Encode as E
 
 
 
 ---- PROGRAM ----
 
 
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -66,18 +66,21 @@ type alias Model =
     }
 
 
+defaultQuote : Quote
 defaultQuote =
     Quote
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
         "Someone famous"
 
 
+api : Api
 api =
     Api
         "https://andruxnet-random-famous-quotes.p.mashape.com/?count=1"
         ""
 
 
+initialModel : Model
 initialModel =
     Model api (Loading defaultQuote)
 
@@ -144,7 +147,7 @@ port askForUniqueId : () -> Cmd msg
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     uniqueId GotUniqueId
 
 
