@@ -1,3 +1,3 @@
 module.exports = {
-  homepage: 'https://exanup.github.io/random-quotes/'
+  homepage: process.env.HOMEPAGE || 'https://exanup.github.io/random-quotes/',
 };
