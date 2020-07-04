@@ -76,7 +76,7 @@ defaultQuote =
 api : Api
 api =
     Api
-        "http://quotes.stormconsultancy.co.uk/random.json"
+        "https://api.quotable.io/random"
         ""
 
 
@@ -258,4 +258,4 @@ authorDecoder =
 
 contentDecoder : D.Decoder Content
 contentDecoder =
-    D.field "quote" D.string
+    D.field "content" D.string
