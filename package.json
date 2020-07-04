@@ -1,0 +1,11 @@
+{
+  "name": "random-quotes",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:exanup/random-quotes.git",
+  "author": "Anup Dhakal <20139982+exanup@users.noreply.github.com>",
+  "license": "MIT",
+  "dependencies": {
+    "create-elm-app": "^4.2.26"
+  }
+}

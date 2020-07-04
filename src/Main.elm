@@ -1,4 +1,4 @@
-port module Main exposing (Api, Author, Content, Model, Msg(..), Page(..), Quote, Uid, Url, api, askForUniqueId, authorDecoder, contentDecoder, defaultQuote, getRandomQuote, init, initialModel, main, quoteDecoder, quotesDecoder, subscriptions, uniqueId, update, view, viewAuthor, viewContent)
+port module Main exposing (Api, Author, Content, Model, Msg(..), Page(..), Quote, Uid, Url, api, askForUniqueId, authorDecoder, contentDecoder, defaultQuote, getRandomQuote, init, initialModel, main, quoteDecoder, subscriptions, uniqueId, update, view, viewAuthor, viewContent)
 
 import Browser
 import Html exposing (Html, blockquote, button, div, footer, h1, span, text)
@@ -76,7 +76,7 @@ defaultQuote =
 api : Api
 api =
     Api
-        "https://andruxnet-random-famous-quotes.p.mashape.com/?count=1"
+        "http://quotes.stormconsultancy.co.uk/random.json"
         ""
 
 
@@ -95,7 +95,7 @@ init _ =
 
 
 type Msg
-    = GotQuotes (Result Http.Error (List Quote))
+    = GotQuote (Result Http.Error Quote)
     | LoadNextQuote
     | GotUniqueId String
 
@@ -116,15 +116,12 @@ update msg model =
         LoadNextQuote ->
             ( model, askForUniqueId () )
 
-        GotQuotes result ->
+        GotQuote result ->
             case result of
-                Ok quotes ->
+                Ok quote ->
                     let
-                        firstQuote =
-                            List.head quotes |> Maybe.withDefault defaultQuote
-
                         page =
-                            Success firstQuote
+                            Success quote
                     in
                     ( { model | page = page }, Cmd.none )
 
@@ -236,21 +233,15 @@ getRandomQuote : Model -> Cmd Msg
 getRandomQuote model =
     -- I know I need to store these keys privately for example in a .env
     -- But for this quick demo, I think it's fine.
-    -- TODO: Put the keys in an .env file
     Http.request
         { method = "GET"
-        , headers = [ Http.header "X-Mashape-Key" "gkr8kFrj1kmshVRpwb7ysAT0iXcwp1OYNE3jsnEeAy65pZLLT7" ]
-        , url = model.api.url ++ "&?" ++ model.api.uid
+        , headers = []
+        , url = model.api.url ++ "?" ++ model.api.uid
         , body = Http.emptyBody
-        , expect = Http.expectJson GotQuotes quotesDecoder
+        , expect = Http.expectJson GotQuote quoteDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
-
-
-quotesDecoder : D.Decoder (List Quote)
-quotesDecoder =
-    D.list quoteDecoder
 
 
 quoteDecoder : D.Decoder Quote
