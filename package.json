@@ -6,6 +6,6 @@
   "author": "Anup Dhakal <20139982+exanup@users.noreply.github.com>",
   "license": "MIT",
   "dependencies": {
-    "create-elm-app": "^4.2.26"
+    "create-elm-app": "^5.0.0"
   }
 }
